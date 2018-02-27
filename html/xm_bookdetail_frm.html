@@ -1,0 +1,323 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>Hello APP</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <!-- 书籍详情frm -->
+	<style>
+	   .xm-byqd-no{
+            border-radius: 2px;
+            margin-right:5px; 
+            
+            padding: 0 2px;
+
+       }
+       .xm-byqd-yes{
+            border-radius: 2px;
+            margin-right:5px; 
+            background-color: #03a9f4;
+            color: #fcfcfc;
+            padding: 0 2px;
+       }
+       .aui-btn-row-xm{
+            height: 65px;
+            line-height: 65px;
+            text-align: center;
+        }
+	</style>
+</head>
+<body>
+
+    <div class="aui-content aui-margin-b-15" id="xm-book-info">
+        
+    </div>
+
+
+<section class="aui-grid" id="xm-book-retained">
+<!-- 
+    <div class="aui-row">
+        
+        <div class="aui-col-xs-4">
+            <p>追书人气</p>
+            <p>2313</p>
+        </div>
+        <div class="aui-col-xs-4">
+        <p>读者留存率</p>
+            <p>27.32%</p>
+          
+        </div>
+        <div class="aui-col-xs-4">
+        <p>更新字数/天</p>
+            <p>暂无统计</p>
+        </div>
+    </div>
+-->
+</section>
+
+<div class="aui-hr"></div>
+        
+
+<section class="aui-grid " id="xm-book-tags">
+<!--
+    <div class="aui-content-padded">
+        <div class="aui-label aui-label-info" style="font-size:16px;padding: 5px;margin-right: 10px;">现代言情</div>
+        <div class="aui-label aui-label-primary" style="font-size:16px;padding: 5px;margin-right: 10px;">豪门世家</div>
+        <div class="aui-label aui-label-danger" style="font-size:16px;padding: 5px;margin-right: 10px;">标签</div>
+        <div class="aui-label aui-label-success" style="font-size:16px;padding: 5px;">都市胜过</div>
+
+    </div>-->
+</section>
+<div class="aui-hr"></div>
+<section class=" aui-grid" id="xm-book-summary">
+        
+        <div class="aui-content-padded aui-ellipsis-2" style="display:-webkit-box;">
+           <!--asdfasdf为范围斯蒂芬斯蒂芬家螺丝钉解放垃圾分类螺丝钉解放垃圾分类阿萨德发射点发地方的撒发射点发地方斯蒂芬斯蒂芬-->
+        </div>
+        
+</section>
+
+<div class="aui-content aui-margin-b-15 aui-margin-t-15" id="xm-book-comment">
+<!--
+    <ul class="aui-list aui-media-list">
+        <li class="aui-list-item">
+            <div class="aui-list-item-inner aui-list-item-arrow">
+                热门评论
+            </div>
+        </li>
+      
+      
+
+            <li class="aui-list-item">
+                <div class="aui-media-list-item-inner">
+                    <div class="aui-list-item-media" style="height: 80px;">
+                        <img src="../image/demo1.png" >
+                    </div>
+                    <div class="aui-list-item-inner">
+                        <div class="aui-list-item-text">
+                            <div class="aui-info-item">这是</div>
+                            <div class="aui-list-item-right">08:00</div>
+                        </div>
+
+                        <div class="aui-list-item-text">
+                            <div class="aui-list-item-title">这是评论标题</div>
+                        </div>
+
+
+                        <div class="aui-content">
+                            
+                            <i class="aui-iconfont aui-icon-star aui-text-warning aui-font-size-12"></i>
+                            <i class="aui-iconfont aui-icon-star aui-font-size-12"></i>
+                            <i class="aui-iconfont aui-icon-star aui-font-size-12"></i>
+                            <i class="aui-iconfont aui-icon-star aui-font-size-12"></i>
+                            <i class="aui-iconfont aui-icon-star aui-font-size-12"></i>
+                        </div>
+                        <div class="aui-list-item-text">
+                            这里是内容区域，新版中的列表布局可以很轻松的帮助开发者完成常见列表样式。
+                        </div>
+                        <div class="aui-info aui-margin-t-5" style="padding:0">
+                            <div class="aui-info-item">
+                                 <i class="aui-iconfont aui-icon-laud"></i><span class="aui-margin-l-5">10</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </li>
+       
+        
+    </ul>-->
+</div>
+
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/xm.js"></script>
+<script type="text/javascript">
+    //静态资源url
+    var statics='http://statics.zhuishushenqi.com';
+    apiready=function(){
+    	api.parseTapmode();
+        var pageParam =api.pageParam;
+        var book_id=pageParam.book_id;
+        var book_detail_url="http://api.zhuishushenqi.com/book/"+book_id;
+        api.ajax({
+            url: book_detail_url,
+            method: 'get',
+            cache:true,
+            timeout:3
+        }, function(ret, err) {
+            var book_detail_html="";
+            var book_retained_html="";
+            var book_tags_html="";
+            if (ret) {
+                var isSerial="已完结";
+                if (true==ret.isSerial) {
+                    ret.updated=ret.updated.replace('T'," ");
+                    time=ret.updated.replace('Z',"");
+                    isSerial=getDateDiff(Date.parse(new Date(time)));
+                }
+                var wordCount=ret.wordCount;
+                if (wordCount>10000) {
+                    wordCount=parseInt(wordCount/10000)+'万';
+                }
+                var allowMonthly='<div class="aui-label aui-label-outlined aui-margin-r-10">不支持包月</div>';
+                if (true==ret.allowMonthly) {
+                    allowMonthly='<div class="aui-label aui-label-info aui-margin-r-10">支持包月</div>'
+                }
+                var allowVoucher='<div class="aui-label aui-label-info aui-margin-r-10">券</div>';
+                if (false==ret.allowVoucher) {
+                    allowVoucher='<div class="aui-label aui-label-outlined aui-margin-r-10">券</div>';
+                }
+                var allowBeanVoucher='<div class="aui-label aui-label-outlined">豆</div>';
+                if (false==ret.allowBeanVoucher) {
+                    allowBeanVoucher='<div class="aui-label aui-label-info">豆</div>';
+                }
+                book_detail_html+=
+                    '<ul class="aui-list aui-media-list">\
+                        <li class="aui-list-item">\
+                            <div class="aui-media-list-item-inner">\
+                                <div class="aui-list-item-media">\
+                                    <img class="xm-img-cache" srcs="'+statics+ret.cover+'">\
+                                </div>\
+                                <div class="aui-list-item-inner">\
+                                    <div class="aui-list-item-text">\
+                                        <div class="aui-list-item-title">'+ret.title+'</div>\
+                                    </div>\
+                                    <div class="aui-list-item-text aui-ellipsis-1">'+ret.author+'</div>\
+                                    <div class="aui-info aui-margin-t-5" style="padding:0">\
+                                        <div class="aui-info-item ">\
+                                        <span>'+ret.cat+'</span>&nbsp;|&nbsp;<span>'+isSerial+'更新</span>&nbsp;|&nbsp;<span>'+wordCount+'字</span>\
+                                        </div>\
+                                    </div>\
+                                     <div class="aui-info aui-margin-t-5" style="padding:0">\
+                                        <div class="aui-info-item ">'+allowMonthly+allowVoucher+allowBeanVoucher+'</div>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                        </li>\
+                        <li class="aui-list-item">\
+                            <div class="aui-content aui-margin-r-15">\
+                                <div class="aui-btn" style="width:49%">+追更新</div>\
+                                <div class="aui-btn aui-btn-info" style="width: 49%" tapmode onclick="openBook(2,\''+ret._id+'\')">开始阅读</div>\
+                            </div>\
+                        </li>\
+                    </ul>';
+                $api.html($api.byId('xm-book-info'),book_detail_html);
+                
+
+                book_retained_html+=
+                                '<div class="aui-row">\
+                                    <div class="aui-col-xs-4">\
+                                        <p>追书人气</p>\
+                                        <p>'+ret.latelyFollower+'</p>\
+                                    </div>\
+                                    <div class="aui-col-xs-4">\
+                                    <p>读者留存率</p>\
+                                        <p>'+ret.retentionRatio+'%</p>\
+                                    </div>\
+                                    <div class="aui-col-xs-4">\
+                                    <p>更新字数/天</p>\
+                                        <p>'+ret.serializeWordCount+'</p>\
+                                    </div>\
+                                </div>';
+
+                $api.html($api.byId('xm-book-retained'),book_retained_html);
+
+                var tag_bg=['aui-label-info','aui-label-primary','aui-label-danger','aui-label-success','aui-label-warning'];
+                book_tags_html+='<div class="aui-content-padded">';
+                for (var i = 0; i < ret.tags.length; i++) {
+                    book_tags_html+='<div class="aui-label '+tag_bg[i]+'" style="font-size:16px;padding: 5px;margin: 5px 10px 5px 0;">'+ret.tags[i]+'</div>';
+                }
+                book_tags_html+='</div>';
+
+                $api.html($api.byId('xm-book-tags'),book_tags_html);
+                var book_summary_html=
+                    '<div class="aui-content-padded aui-ellipsis-2" style="display:-webkit-box;" id="xm-book-longIntro1" tapmode onclick="xm_show1();">'+ret.longIntro+'</div>\
+                    <div class="aui-content-padded" id="xm-book-longIntro2" style="display:none;" tapmode onclick="xm_show2();">'+ret.longIntro+'</div>';
+
+                $api.html($api.byId('xm-book-summary'),book_summary_html);
+
+                var  review_url='http://api.zhuishushenqi.com/post/review/best-by-book?book='+book_id;
+                api.ajax({
+                    url: review_url,
+                    method: 'get',
+                    cache:true,
+                    timeout:3
+                }, function(review_ret, review_err) {
+                    if (true==review_ret.ok) {
+                        var book_comment_html='<ul class="aui-list aui-media-list">\
+                                        <li class="aui-list-item">\
+                                            <div class="aui-list-item-inner aui-list-item-arrow">\
+                                                热门评论\
+                                            </div>\
+                                        </li>';
+
+                        for (var i = 0; i < review_ret.reviews.length; i++) {
+                            review_ret.reviews[i].created=review_ret.reviews[i].created.replace('T'," ");
+                            var time_a=review_ret.reviews[i].created.replace('Z',"");
+                            var created=getDateDiff(Date.parse(new Date(time_a)));
+
+                            var rating=review_ret.reviews[i].rating;
+                            var rating_html="";
+                            for (var j = 0; j < rating; j++) {
+                                rating_html+='<i class="aui-iconfont aui-icon-star aui-text-warning aui-font-size-12"></i>';
+                            }
+                            for (var k = 0; k < 5-rating; k++) {
+                                rating_html+='<i class="aui-iconfont aui-icon-star aui-font-size-12"></i>';
+                            }
+                            book_comment_html+=
+                                        '<li class="aui-list-item">\
+                                            <div class="aui-media-list-item-inner">\
+                                                <div class="aui-list-item-media" style="width:3rem;height: 4rem;">\
+                                                    <img class="xm-img-cache" srcs="'+statics+review_ret.reviews[i].author.avatar+'" >\
+                                                </div>\
+                                                <div class="aui-list-item-inner">\
+                                                    <div class="aui-list-item-text">\
+                                                        <div class="aui-info-item">'+review_ret.reviews[i].author.nickname+'</div>\
+                                                        <div class="aui-list-item-right">'+created+'</div>\
+                                                    </div>\
+                                                    <div class="aui-list-item-text">\
+                                                        <div class="aui-list-item-title">'+review_ret.reviews[i].title+'</div>\
+                                                    </div>\
+                                                    <div class="aui-content">'+rating_html+'</div>\
+                                                    <div class="aui-list-item-text aui-ellipsis-2">'+review_ret.reviews[i].content+'</div>\
+                                                    <div class="aui-info aui-margin-t-5" style="padding:0">\
+                                                        <div class="aui-info-item">\
+                                                             <i class="aui-iconfont aui-icon-laud"></i><span class="aui-margin-l-5">'+review_ret.reviews[i].likeCount+'</span>\
+                                                        <div>\
+                                                    </div>\
+                                                </div>\
+                                            </div>\
+                                        </li>';
+                        }
+
+                        book_comment_html+='</ul>';
+                        $api.html($api.byId('xm-book-comment'),book_comment_html);
+                        imageCache();
+                    }
+                    
+                });
+
+            }
+           
+
+        });
+    }
+
+    //显示完整info
+    function xm_show1() {
+        $api.css($api.byId('xm-book-longIntro1'),'display:none;');
+        $api.css($api.byId('xm-book-longIntro2'),'display:block;');
+    }
+    //隐藏完成info
+    function xm_show2() {
+        $api.css($api.byId('xm-book-longIntro1'),'display:-webkit-box;');
+        $api.css($api.byId('xm-book-longIntro2'),'display:none;');
+    }
+</script>
+</html>

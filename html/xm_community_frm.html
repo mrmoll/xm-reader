@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+<!--社区frm-->
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+</head>
+<body>
+    <div id="showsss" class="book">社区功能不开发</div>
+    <div id="showsss" class="book" onclick="share();">微博分享测试</div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+function share(){
+	var weibo = api.require('weibo');
+	weibo.shareText({
+	    text: '这里是测试分享的内容',
+	}, function(ret, err) {
+	    if (ret.status) {
+	        alert('分享文本内容成功');
+	    }
+	});
+}
+	//var discuz_url = 'http://bbs.jysq.net/';
+	var discuz_url = 'http://bbs.211600.com/';
+	//var login_get_url = discuz_url+'member.php?mod=logging&action=login';
+	var login_get_url = discuz_url+'member.php?mod=logging&action=login&mobile=2';
+	//var login_get_url = 'https://www.baidu.com';
+    apiready = function(){
+    	/*api.setFullScreen({
+		    fullScreen: true
+		});*/
+    	//jysq();
+    	//0938B240F05B062D428740A12B8BF0FE,9267972162EB602DEA4087DE440592A0,764E445631C827B7D6240733130C4BD9,900B7690CBAFE0BD5DCF7C023782D0DA
+   
+	};
+var book=[
+		'0938B240F05B062D428740A12B8BF0FE',
+		'9267972162EB602DEA4087DE440592A0',
+		'764E445631C827B7D6240733130C4BD9',
+		'900B7690CBAFE0BD5DCF7C023782D0DA'
+		];
+function kanshu(index,progress){
+        var bookReader = api.require('bookReader');
+
+        var filePath="widget://res/"+book[index]+".txt";
+
+        bookReader.open({
+            filePath: filePath,
+            textStyle:{
+                size:16,
+                //color:"#ff0000"
+            },
+           
+            codingType:'utf8',
+            progress:progress
+            //bg:'rgba(0,0,0,0)'
+            //fixedOn:
+        }, function(ret, err) {
+            if (ret) {
+            	var eventType=ret.eventType;
+	            if ('page_down'==eventType || 'page_up'==eventType) {
+
+	            }
+	            else if ('page_begin'==eventType) {
+	            	index-=1;
+
+	            	if (index<0) {
+	            		index=0;
+	            	}else{
+	            		
+	            		
+
+		                bookReader.close(function(close_ret, close_err) {
+						    if (close_ret.status) {
+						        kanshu(index,100);
+						    } 
+						});
+	            	}
+	                
+	            }
+	            else if ( 'page_end'==eventType) {
+	            	index+=1;
+	            	if (index>3) {
+	            		index=3;
+	            	}else{
+	            		
+
+
+	                    bookReader.close(function(close_ret, close_err) {
+	                    	console.log(JSON.stringify("关闭"+close_ret));
+						    if (close_ret.status) {
+						        kanshu(index,0);
+						    } 
+						});
+
+	                    
+	            	}
+	            }
+            }
+    
+        });
+
+}
+
+	function jysq(){
+    	api.ajax({
+		    url: login_get_url,
+		    method: 'get',
+		    dataType:'text',
+		    
+		    returnAll:true
+		}, function(ret, err) {
+			var login_hash_arr=ret.body.match(/<input\s*type="hidden"\s*name="formhash"\s*id="formhash"\s*value='(.*?)'\s*\/>/i);
+			if (!login_hash_arr) {
+				reply();
+			}else{
+				var login_hash=login_hash_arr[1];
+				var loginhash=ret.body.match(/loginhash=(.*?)&/i)[1];
+				//var login_post_url=login_get_url+"&loginsubmit=yes&loginhash="+loginhash+"&inajax=1";
+				var login_post_url=discuz_url+"member.php?mod=logging&action=login&loginsubmit=yes&loginhash="+loginhash+"&mobile=2&handlekey=loginform&inajax=1";
+				var values={
+					'formhash':login_hash,
+					'referer':discuz_url+"./",
+				    'fastloginfield':'username', 
+				    'username':"admi'n'",
+				    'password':'suplee0207',
+				    'cookietime':2592000,
+				    'questionid':0,
+					'answer':''
+				};
+				api.ajax({
+					    url: login_post_url,
+					    method: 'post',
+					    dataType:'text',
+					    data:{
+					    	values:values
+						}
+				}, function(login_ret, login_err) {
+						//var login_hash=ret.match(/<input\s*type="hidden"\s*name="formhash"\s*value="(.*?)"\s*\/>/i)[1];
+						console.log(JSON.stringify(login_ret));
+						if (login_ret.indexof("succeedhandle_loginform")>=0) {
+							console.log('登录成功');
+							var reply_get_url=discuz_url+"forum.php?mod=viewthread&tid=1508545&extra=page%3D1&mobile=2";
+							api.ajax({
+							    url: reply_get_url,
+							    method: 'get',
+							    dataType:'text'
+							    
+							}, function(reply_get_ret, reply_get_err) {
+								//var login_hash=ret.match(/<input\s*type="hidden"\s*name="formhash"\s*value="(.*?)"\s*\/>/i)[1];
+								console.log(JSON.stringify(reply_get_ret));
+								console.log(JSON.stringify(reply_get_err));
+
+							});
+						}else{
+							console.log('登录失败');
+						}
+
+
+
+
+				});
+			}
+	
+		
+			
+
+
+			
+		});
+	}
+
+
+
+	function reply(){
+		var reply_get_url=discuz_url+"forum.php?mod=viewthread&tid=1508545&extra=page%3D1&mobile=2";
+		api.ajax({
+		    url: reply_get_url,
+		    method: 'get',
+		    dataType:'text'
+		    
+		}, function(reply_get_ret, reply_get_err) {
+			var reply_hash=reply_get_ret.match(/<input\s*type="hidden"\s*name="formhash"\s*value="(.*?)"\s*\/>/i)[1];
+			console.log(JSON.stringify(reply_get_ret));
+			console.log("reply_hash:"+reply_hash);
+			var reply_post_url=discuz_url+"forum.php?mod=post&action=reply&fid=26&tid=1508545&extra=page%3D2&replysubmit=yes&mobile=2&handlekey=fastpost&loc=1&inajax=1";
+			var values={
+				'formhash':reply_hash,
+				'message':'再顶个'
+			};
+
+			api.ajax({
+			    url: reply_post_url,
+			    method: 'post',
+			    dataType:'text',
+			    data:{
+			    	values:values
+				}
+			}, function(reply_post_ret, reply_post_err) {
+					//var login_hash=ret.match(/<input\s*type="hidden"\s*name="formhash"\s*value="(.*?)"\s*\/>/i)[1];
+					console.log(JSON.stringify("reply_post_ret:"+reply_post_ret));
+			});
+
+
+		});
+	}
+
+
+</script>
+</html>

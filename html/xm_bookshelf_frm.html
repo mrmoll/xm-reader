@@ -1,0 +1,416 @@
+<!doctype html>
+<html>
+<head>
+<!--这是书架frm-->
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <style type="text/css">
+    	body{
+            background-color: #fff;
+        }
+    	.aui-ellipsis-2{
+    		display: -webkit-box !important;
+    	}
+    </style>
+</head>
+<body>
+<div id="xm-book-list"></div>
+
+    
+
+<div class="aui-content" style="text-align: center;display: none;padding-top: 100px;" id="xm-empty">       
+    <div style="width: 116px;margin:0 auto;">
+        <img src="../image/add_book.png" />
+    </div>
+    <section class="aui-content-padded">
+        <h5>添加你喜爱的小说</h5>
+    </section>
+    <div class="aui-btn aui-btn-info" tapmode onclick="gotoFind();">
+        <i class="aui-iconfont aui-icon-plus"></i>去添加
+    </div>
+</div>
+
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/xm.js"></script>
+<script type="text/javascript">
+    
+    apiready = function(){
+        api.parseTapmode();
+        /*$api.rmStorage('bookshelf');
+        $api.rmStorage('update_book');
+        api.removePrefs({key: 'sex'});
+        return;*/
+        initBookshelf();
+        //下拉刷新
+        api.setRefreshHeaderInfo({
+            //loadingImg: 'widget://image/refresh.png',
+            bgColor: '#ccc',
+            textColor: '#fff',
+            textDown: '下拉刷新...',
+            textUp: '松开刷新...'
+        }, function(ret, err) {
+            //在这里从服务器加载数据，加载完成后调用api.refreshHeaderLoadDone()方法恢复组件到默认状态
+            updateBookshelf();
+
+//            api.refreshHeaderLoadDone();
+        });
+    };
+    //初始化书架页面
+    function initBookshelf(){
+
+        var bookshelf=$api.getStorage('bookshelf');
+        if (bookshelf !=undefined) {
+            var html='<div class="aui-content aui-margin-b-15"><ul class="aui-list aui-media-list">';
+            for(var item in bookshelf){
+                var hide_html='';
+
+                if(!bookshelf[item].hide){
+                    hide_html='<div class="aui-dot"></div>';
+                }
+
+                var timestamp=getDateDiff(Date.parse(new Date(bookshelf[item].updated)));
+                html+=
+                        '<li class="aui-list-item" tapmode onclick="openBook(1,\''+bookshelf[item].id+'\');">\
+                            <div class="aui-media-list-item-inner">\
+                                <div class="aui-list-item-media"  style="width: auto;">\
+                                    <img class="xm-img-cache" srcs="'+bookshelf[item].cover+'" style="width: 54px;height: 72px;">\
+                                </div>\
+                                <div class="aui-list-item-inner">\
+                                    <div class="aui-list-item-text">\
+                                        <div class="aui-list-item-title aui-margin-t-10">'+bookshelf[item].title+'</div>\
+                                    </div>\
+                                    <div class="  aui-list-item-text aui-ellipsis-2 ">'+timestamp+':'+bookshelf[item].lastChapter+'</div>\
+                                </div>\
+                                    <section class="aui-content-padded" style="margin-top: 40px !important;" id="up-hide-'+bookshelf[item].id+'">'+hide_html+'\
+                                    </section>\
+                            </div>\
+                        </li>';
+            }
+
+            html+=
+            '<li class="aui-list-item" tapmode onclick="gotoFind();">\
+                <div class="aui-media-list-item-inner">\
+                    <div class="aui-list-item-media" >\
+                        <img style="margin:0 auto;width:32px;height: 32px;line-height: 32px;" src="../image/add.png">\
+                    </div>\
+                    <div class="aui-list-item-inner" >\
+                        <div class="aui-list-item-text">\
+                            <div class="aui-list-item-title">添加你喜欢的小说</div>\
+                        </div>\
+                    </div>\
+                </div>\
+            </li><ul></div>';
+
+            $api.html($api.byId('xm-book-list'), html);
+            imageCache();
+        }else{
+            updateBookshelf();
+        }
+        
+    }
+
+    //更新书架
+    function updateBookshelf(){
+        //获取书架是否有值
+        /*$api.rmStorage('bookshelf');
+        $api.rmStorage('update_book');
+        api.refreshHeaderLoadDone();
+        return;*/
+        var bookshelf=$api.getStorage('bookshelf');
+        //如果书架有值就更新书架
+        if (bookshelf !=undefined) {
+            var update_book=$api.getStorage('update_book');
+
+            //更新书架
+            var update_url='http://api.zhuishushenqi.com/book?view=updated&id='+update_book;
+            api.ajax({
+                url: update_url,
+                method: 'get',
+                cache:true,
+                timeout:3
+            }, function(ret, err) {
+                //这里进行保存书架操作
+                if(ret){
+                    var update_bookshelf={};
+                    var html='<div class="aui-content aui-margin-b-15"><ul class="aui-list aui-media-list">';
+                    //静态资源url
+                    var statics='http://statics.zhuishushenqi.com';
+                    //定义更新书架接口的参数string 
+                    var update_book="";
+                    for (var i in bookshelf){//1
+
+                        var time=bookshelf[i].updated;
+                        var timestamp=bookshelf[i].timestamp;
+                        var lastChapter=bookshelf[i].lastChapter;
+                        var hide=bookshelf[i].hide;
+                        var hide_html="";
+                        if (!bookshelf[i].hide) {
+                            hide_html='<div class="aui-dot" ></div>';
+                        }
+                        for(var j =0;j<ret.length;j++){
+                            if (i==ret[j]._id){
+                                ret[j].updated=ret[j].updated.replace('T'," ");
+                                var update_time=ret[j].updated.replace('Z',"");
+                                if(bookshelf[i].updated<update_time){
+                                    time=update_time;
+                                    timestamp=getDateDiff(Date.parse(new Date(time)));
+                                    lastChapter=ret[j].lastChapter;
+                                    hide=false;
+                                    hide_html='<div class="aui-dot"></div>';
+                                    break;
+                                }
+                                
+
+                            }
+                        }
+                        
+                        //书籍id、标题、封面、更新时间、最后章节
+                        var tmp={
+                            id:bookshelf[i].id,
+                            title:bookshelf[i].title,
+                            cover:bookshelf[i].cover,
+                            updated:time,
+                            timestamp:timestamp,
+                            lastChapter:lastChapter,
+                            hide:hide
+                        }
+                        update_bookshelf[i]=tmp;
+                        html+=
+                        '<li class="aui-list-item " tapmode onclick="openBook(1,\''+tmp.id+'\');">\
+                            <div class="aui-media-list-item-inner">\
+                                <div class="aui-list-item-media"  style="width: auto;">\
+                                    <img class="xm-img-cache" srcs="'+tmp.cover+'" style="width: 54px;height: 72px;">\
+                                </div>\
+                                <div class="aui-list-item-inner">\
+                                    <div class="aui-list-item-text">\
+                                        <div class="aui-list-item-title aui-margin-t-10">'+tmp.title+'</div>\
+                                    </div>\
+                                    <div class="  aui-list-item-text aui-ellipsis-2 ">'+tmp.timestamp+':'+tmp.lastChapter+'</div>\
+                                </div>\
+                                    <section class="aui-content-padded" style="margin-top: 40px !important;" id="up-hide-'+tmp.id+'">'+hide_html+'\
+                                    </section>\
+                            </div>\
+                        </li>';
+                    }//1
+
+                    html+=
+                        '<li class="aui-list-item" tapmode onclick="gotoFind();">\
+                            <div class="aui-media-list-item-inner">\
+                                <div class="aui-list-item-media" >\
+                                    <img style="margin:0 auto;width:32px;height: 32px;line-height: 32px;" src="../image/add.png">\
+                                </div>\
+                                <div class="aui-list-item-inner" >\
+                                    <div class="aui-list-item-text">\
+                                        <div class="aui-list-item-title">添加你喜欢的小说</div>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                        </li><ul></div>';
+                    
+                    $api.html($api.byId('xm-book-list'), html);
+                    imageCache();
+                    api.refreshHeaderLoadDone();
+                    $api.setStorage('bookshelf',update_bookshelf);
+                }else{
+                   
+                    api.toast({
+                        msg: err.msg,
+                        duration: 2000,
+                        location: 'middle'
+                    });
+                    api.refreshHeaderLoadDone();
+                }
+            });
+        }else{
+            bookshelf={};
+            //书架没值获取性别偏好设置
+            var  prefs_sex= api.getPrefs({
+                sync: true,
+                key: 'sex'
+            });
+            //如果偏好空 ，就打开偏好设置 ，，第一次安装app的时候偏好为空
+            if (prefs_sex ==''){
+                api.openFrame({
+                    name: 'xm_setpref_frm',
+                    url: './xm_setpref_frm.html',
+                    rect: {
+                        x: 0,
+                        y: 0,
+                        w: 'auto',
+                        h: 'auto'
+                    },
+                    pageParam: {
+                        name: 'test'
+                    }
+                });
+                //$api.css($api.byId('xm-empty'),'display:block;');
+                return;
+            }else if ('no'==prefs_sex) {//如果在设置偏好的时候X掉，偏好为no
+                $api.css($api.byId('xm-empty'),'display:block;');
+                return;
+            }
+/*api.showProgress({
+    title: '努力加载中...',
+    text: '先喝杯茶...',
+    modal: false
+});*/
+
+            //设置偏好之后就根据偏好获取推荐，然后保存到书架中
+            var recomend_url='http://api.zhuishushenqi.com/book/recommend?gender='+prefs_sex;
+            api.ajax({
+                url: recomend_url,
+                method: 'get',
+                cache:true,
+                timeout:3
+            }, function(ret, err) {
+                //这里进行保存书架操作
+                if(true==ret.ok){
+                    var books=ret.books;
+                    var html='<div class="aui-content aui-margin-b-15"><ul class="aui-list aui-media-list">';
+                    //静态资源url
+                    var statics='http://statics.zhuishushenqi.com';
+                    //定义更新书架接口的参数string 
+                    var update_book="";
+                    for (var i=0;i<books.length;i++){
+                        books[i].updated=books[i].updated.replace('T'," ");
+                        var time=books[i].updated.replace('Z',"");
+                        var timestamp=getDateDiff(Date.parse(new Date(time)));
+                        var hide=false;
+                        //书籍id、标题、封面、更新时间、最后章节
+                        var tmp={
+                            id:books[i]._id,
+                            title:books[i].title,
+                            cover:statics+books[i].cover,
+                            updated:time,
+                            timestamp:timestamp,
+                            lastChapter:books[i].lastChapter,
+                            hide:hide
+                        }
+                        update_book+=tmp.id+",";
+                        bookshelf[books[i]._id]=tmp;
+                        html+=
+                        '<li class="aui-list-item" tapmode onclick="openBook(1,\''+tmp.id+'\');">\
+                            <div class="aui-media-list-item-inner">\
+                                <div class="aui-list-item-media"  style="width: auto;">\
+                                    <img class="xm-img-cache" srcs="'+tmp.cover+'" style="width: 54px;height: 72px;">\
+                                </div>\
+                                <div class="aui-list-item-inner">\
+                                    <div class="aui-list-item-text">\
+                                        <div class="aui-list-item-title aui-margin-t-10">'+tmp.title+'</div>\
+                                    </div>\
+                                    <div class="  aui-list-item-text aui-ellipsis-2 ">'+tmp.timestamp+':'+tmp.lastChapter+'</div>\
+                                </div>\
+                                    <section class="aui-content-padded" style="margin-top: 40px !important;" id="up-hide-'+tmp.id+'">\
+                                    <div class="aui-dot"></div>\
+                                    </section>\
+                            </div>\
+                        </li>';
+                    }
+
+                    html+=
+                        '<li class="aui-list-item" tapmode onclick="gotoFind();">\
+                            <div class="aui-media-list-item-inner">\
+                                <div class="aui-list-item-media" >\
+                                    <img style="margin:0 auto;width:32px;height: 32px;line-height: 32px;" src="../image/add.png">\
+                                </div>\
+                                <div class="aui-list-item-inner" >\
+                                    <div class="aui-list-item-text">\
+                                        <div class="aui-list-item-title">添加你喜欢的小说</div>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                        </li><ul></div>';
+                    
+                    $api.html($api.byId('xm-book-list'), html);
+                    imageCache();
+                    api.refreshHeaderLoadDone();
+                    $api.setStorage('bookshelf',bookshelf);
+                    update_book=(update_book.substring(update_book.length-1)==',')?update_book.substring(0,update_book.length-1):update_book;
+                    $api.setStorage('update_book',update_book);
+                }else{
+                    api.toast({
+                        msg: err.msg,
+                        duration: 2000,
+                        location: 'middle'
+                    });
+                    api.refreshHeaderLoadDone();
+                }
+            });
+            
+        }
+    }
+
+    //缓存图片
+    function imageCache(){
+        var srcs = $api.domAll("img.xm-img-cache");
+        if (srcs.length > 0) {
+            for(var i=0;i<srcs.length;i++){
+                (function(imgObj){
+                    var imgUrl = $api.attr(imgObj, 'srcs');
+                    api.imageCache({
+                        url: imgUrl
+                    },function(ret,err){
+                        if (ret) {
+                            $api.attr(imgObj, 'src', ret.url);
+                        }
+                    });
+                })(srcs[i]);
+            }
+        }
+    }
+
+    //去到发现页面
+    function gotoFind(){
+        var jsfun="var cb = document.getElementById('xm-nav3');randomSwitchBtn(cb,2);";
+        api.execScript({
+            name: 'root',
+            script: jsfun
+        });
+    }
+
+
+    //转换时间差
+    function getDateDiff(dateTimeStamp){
+        var minute = 1000 * 60;
+        var hour = minute * 60;
+        var day = hour * 24;
+        var halfamonth = day * 15;
+        var month = day * 30;
+        var now = new Date().getTime();
+        var diffValue = now - dateTimeStamp;
+        var result="异常";
+        if(diffValue < 0){return result;}
+        var yearC=diffValue/(365*day);
+        var monthC =diffValue/month;
+        var halfamonthC=diffValue/halfamonth;
+        var weekC =diffValue/(7*day);
+        var dayC =diffValue/day;
+        var hourC =diffValue/hour;
+        var minC =diffValue/minute;
+        if (yearC>=1) {
+            result="" + parseInt(yearC) + "年前";
+        }else if(monthC>=1){
+            result="" + parseInt(monthC) + "个月前";
+        }else if (halfamonthC>=1) {
+            result="半个月前";
+        }else if(weekC>=1){
+            result="" + parseInt(weekC) + "周前";
+        }
+        else if(dayC>=1){
+            result=""+ parseInt(dayC) +"天前";
+        }
+        else if(hourC>=1){
+            result=""+ parseInt(hourC) +"小时前";
+        }
+        else if(minC>=1){
+            result=""+ parseInt(minC) +"分钟前";
+        }else
+            result="刚刚";
+        return result;
+    }
+
+</script>
+</html>

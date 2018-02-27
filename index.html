@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <link rel="stylesheet" type="text/css" href="./css/aui.css" />
+    <style type="text/css">
+        .header {
+            padding: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="aui-bar aui-bar-nav aui-text-left header" id="header">
+            <a class="aui-btn aui-pull-right">
+                <i class="aui-iconfont aui-icon-menu"></i>
+            </a>
+            <a class="aui-btn aui-pull-right" tapmode onclick="openWin('xm_searchbar_win');">
+                <i class="aui-iconfont aui-icon-search"></i>
+            </a>
+            小陌阅读
+    </header>
+
+    <div class="aui-tab" id="xm-nav">
+        <div class="aui-tab-item aui-active" id="xm-nav1" tapmode onclick="randomSwitchBtn(this,0);">书架</div>
+        <div class="aui-tab-item" id="xm-nav2" tapmode onclick="randomSwitchBtn(this,1);">社区</div>
+        <div class="aui-tab-item" id="xm-nav3" tapmode onclick="randomSwitchBtn(this,2);">发现</div>
+    </div>
+</body>
+<script type="text/javascript" src="./script/api.js"></script>
+
+<script type="text/javascript">
+    apiready = function(){
+        api.setStatusBarStyle({
+            style: 'light'
+        });
+        api.parseTapmode();
+        var header = $api.byId('header');
+        $api.fixStatusBar(header);
+        var headerPos = $api.offset(header);
+        var nav_h = $api.offset($api.byId('xm-nav')).h;
+
+
+        api.openFrameGroup ({
+            name: 'xm_nav_frmGrp',
+            scrollEnabled:true,
+            rect:{x:0, y:headerPos.h+nav_h, w:'auto', h:'auto'},
+            index:0,
+            preload:2,
+            frames:
+            [{
+                name: 'xm_bookshelf_frm', 
+                url: './html/xm_bookshelf_frm.html', 
+                bounces:true
+            },{
+                name: 'xm_community_frm', 
+                url: './html/xm_community_frm.html', 
+                bounces:false
+            },{
+                name: 'xm_find_frm', 
+                url: './html/xm_find_frm.html', 
+                bounces:false
+            }]
+        }, function(ret, err){
+            var nav = $api.byId('xm-nav');
+            var navAct = $api.dom(nav, 'div.aui-active');
+            $api.removeCls(navAct, 'aui-active');
+            var name = ret.name;
+            var index = ret.index;
+            if(index==0){
+                var nav1=$api.byId('xm-nav1');
+                $api.addCls(nav1, 'aui-active');
+            }else if(index==1){
+                var nav2=$api.byId('xm-nav2');
+                $api.addCls(nav2, 'aui-active');
+            }else if(index==2){
+                var nav3=$api.byId('xm-nav3');
+                $api.addCls(nav3, 'aui-active');
+            }
+        });
+ 
+    };
+
+
+    function randomSwitchBtn(obj, index) {
+        var nav = $api.byId('xm-nav');
+        var navAct = $api.dom(nav, 'div.aui-active');
+        $api.removeCls(navAct, 'aui-active');
+        $api.addCls(obj, 'aui-active');
+        api.setFrameGroupIndex({
+            name: 'xm_nav_frmGrp',
+            index: index
+        });
+    }
+
+    function openWin(name){
+        var delay = 0;
+        if(api.systemType != 'ios'){
+            delay = 300;
+        }
+        api.openWin({
+            name: ''+name+'',
+            url: './html/'+name+'.html',
+            bounces:false,
+            delay: delay,
+            slidBackEnabled:true,
+            vScrollBarEnabled:false
+        });
+    }
+
+
+    function openClub(){
+        var delay = 0;
+        if(api.systemType != 'ios'){
+            delay = 300;
+        }
+        api.openWin({
+            name: 'club_win',
+            url: './html/club_win.html',
+            bounces:false,
+            delay: delay,
+            slidBackEnabled:true,
+            vScrollBarEnabled:false,
+            progress:{
+                type:"page"
+            }
+        });
+    }
+   
+</script>
+</html>

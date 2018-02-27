@@ -1,0 +1,557 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>Hello APP</title>
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+    <!-- 打开阅读器的win窗口 -->
+	<style>
+		/**{
+            margin:0;
+            padding:0;
+        }
+        .top {
+            width: 100%;
+            height: 40px;
+            background: #fffff0;
+            position:absolute;
+            top:0;
+            line-height:40px;
+        }
+        .bottom{
+            width:100%;
+            height:40px;
+            background:#fffff0;
+            position:absolute;
+            bottom:0;
+            line-height:40px;
+        }
+        .mainBox{
+            width:100%;
+            position:absolute;
+            top:40px;
+            bottom:40px;
+            background-color: #fffff0;
+        }*/
+	</style>
+</head>
+<body>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+    
+    apiready=function(){
+        api.setFullScreen({
+            fullScreen: true
+        });
+    	
+        var pageParam =api.pageParam;
+        console.log(JSON.stringify(pageParam));
+        var type=pageParam.type;
+        var book_id=pageParam.book_id;
+        var file_name=pageParam.file_name;
+        console.log(book_id);
+//$api.rmStorage('read_bookshelf');
+        //type 1从书架读取,2从书籍详情读取
+        if (1==type) {
+            var read_bookshelf=$api.getStorage('read_bookshelf');
+            if (undefined==read_bookshelf || undefined == read_bookshelf[book_id]) {
+                api.showProgress({
+                    modal: false
+                });
+                file_link=getFirstChapter(book_id);
+            }else{
+                var read_bookshelf_info=read_bookshelf[book_id];
+                var file="fs://book/"+book_id+"/"+read_bookshelf_info.book_source_id+"/"+read_bookshelf_info.file_name+".txt";
+                readBook(file,book_id,read_bookshelf_info.progress,read_bookshelf_info.chapter_index);
+            }
+        }else if (2==type) {
+            var read_bookshelf=$api.getStorage('read_bookshelf');
+            if (undefined==read_bookshelf || undefined == read_bookshelf[book_id]) {
+                api.showProgress({
+                    modal: false
+                });
+                file_link=getFirstChapter(book_id);
+            }else{
+                var read_bookshelf_info=read_bookshelf[book_id];
+                var file="fs://book/"+book_id+"/"+read_bookshelf_info.book_source_id+"/"+read_bookshelf_info.file_name+".txt";
+                readBook(file,book_id,read_bookshelf_info.progress,read_bookshelf_info.chapter_index);
+            }
+        }
+
+    }
+
+
+    //获取新书刚点击
+    function getFirstChapter(book_id){
+        var book_source_list="http://api.zhuishushenqi.com/toc?view=summary&book="+book_id;
+        api.ajax({
+            url: book_source_list,
+            method: 'get',
+            cache:true,
+            timeout:3
+        }, function(ret, err) {
+            if (ret) {
+                var book_source_id=ret[0]._id;
+                var book_source=ret[0].source;
+                var chapter_list="http://api.zhuishushenqi.com/toc/"+book_source_id+"?view=chapters";
+                api.ajax({
+                    url: chapter_list,
+                    method: 'get',
+                    cache:true,
+                    timeout:3
+                }, function(ret, err) {//2
+                    if (ret) {//3
+                        //根据章节link获取章节内容
+
+                        var first_chapter=encodeURIComponent(ret.chapters[0].link);
+                        var set_chapter_list=ret.chapters;
+                        var chapter_title=ret.chapters[0].title;
+                        var chapter_url="http://chapterup.zhuishushenqi.com/chapter/"+first_chapter;
+                        //保存小说的文件名
+                        var signature = api.require('signature');
+                        var file_name = signature.md5Sync({
+                            data: ret.chapters[0].link
+                        });
+
+                        api.ajax({
+                            url: chapter_url,
+                            method: 'get',
+                            cache:true,
+                            timeout:3
+                        }, function(ret, err) {//4
+                            if (ret) {//5
+                                if (true==ret.ok) {
+                                    //创建小说文件，并写入小说内容
+                                    var file="fs://book/"+book_id+"/"+book_source_id+"/"+file_name+".txt";
+                                    //var file="fs://book/"+book_id+"/"+book_source_id+"/%"+first_chapter+".txt";
+                                    if ('zhuishuvip'==book_source) {
+                                        var write_file=writeFile(file,chapter_title+"==========start\n\n"+ret.chapter.cpContent+chapter_title+"==========end\n\n");
+                                    }else{
+                                        var write_file=writeFile(file,chapter_title+"==========start\n\n"+ret.chapter.body+chapter_title+"==========end\n\n");
+                                    }
+                                    
+                                    if (!write_file) {
+                                        return false;
+                                    }
+                                    api.hideProgress();
+                                    var read_bookshelf=$api.getStorage('read_bookshelf');
+                                    if (undefined==read_bookshelf) {
+                                        read_bookshelf={};
+                                    }
+                                    read_bookshelf[book_id]={
+                                        'book_source':book_source,
+                                        'book_source_id':book_source_id,
+                                        'file_name':file_name,
+                                        'progress':0,
+                                        'chapter_index':0,
+                                        'chapter_list':set_chapter_list,
+
+                                    }
+                                    $api.setStorage('read_bookshelf',read_bookshelf);
+                                    //写入文件成功开始读取小说
+                                    readBook(file,book_id,0,0);
+
+                                }else{
+                                    api.hideProgress();
+                                    api.toast({
+                                        msg: "章节内容获取不对!",
+                                        duration: 3000,
+                                        location: 'middle'
+                                    });
+                                    closeBookReader();
+                                }
+                                
+
+                            }else{//5
+                                api.hideProgress();
+                                api.toast({
+                                    msg: "章节内容获取错误!",
+                                    duration: 3000,
+                                    location: 'middle'
+                                });
+                                closeBookReader();
+                            }
+                        });//4
+                    }else{//3
+                        api.hideProgress();
+                        api.toast({
+                            msg: '获取章节列表错误!',
+                            duration: 3000,
+                            location: 'middle'
+                        });
+                        closeBookReader();
+                    }
+                });//2
+            }else{//
+                api.hideProgress();
+                api.toast({
+                    msg: '获取源错误!',
+                    duration: 3000,
+                    location: 'middle'
+                });
+                //关闭阅读器
+                closeBookReader();
+            }
+        });
+    }
+function closeBookReader(){
+    var bookReader = api.require('bookReader');
+    bookReader.close(function(ret, err) {
+      
+    });
+    api.closeWin();
+}
+
+    //创建文件
+    function createFile(book_id,book_source_id,chapter_id){
+        var xm_reader_dir="fs://book";
+        var fs = api.require('fs');
+        var ret = fs.existSync({
+            path: xm_reader_dir
+        });
+        if (!ret.directory) {
+            ret = fs.createDirSync({
+                path: xm_reader_dir
+            });
+            if (!ret.status) {
+                api.toast({
+                    msg: ret.msg,
+                    duration: 3000,
+                    location: 'middle'
+                });
+                return false;
+            }
+        }
+
+        var book_id_dir=xm_reader_dir+"/"+book_id;
+        ret = fs.existSync({
+            path: book_id_dir
+        });
+        if (!ret.directory) {
+            ret = fs.createDirSync({
+                path: book_id_dir
+            });
+            if (!ret.status) {
+                api.toast({
+                    msg: ret.msg,
+                    duration: 3000,
+                    location: 'middle'
+                });
+                return false;
+            }
+        }
+
+
+        var book_source_id_dir=book_id_dir+"/"+book_source_id;
+        ret = fs.existSync({
+            path: book_source_id_dir
+        });
+        if (!ret.directory) {
+            ret = fs.createDirSync({
+                path: book_source_id_dir
+            });
+            if (!ret.status) {
+                api.toast({
+                    msg: ret.msg,
+                    duration: 3000,
+                    location: 'middle'
+                });
+                return false;
+            }
+        }
+
+
+        var chapter_id_file=book_source_id_dir+"/"+chapter_id+".txt";
+        ret = fs.existSync({
+            path: chapter_id_file
+        });
+        if (!ret.exist || ret.directory) {
+            ret = fs.createFileSync({
+                path: chapter_id_file
+            });
+            
+            if (!ret.status) {
+                api.toast({
+                    msg: ret.msg,
+                    duration: 3000,
+                    location: 'middle'
+                });
+                return false;
+            }
+        }
+
+        return true;
+
+
+    }
+
+
+    //把从接口获得的小说内容写入文件
+    function writeFile(file,content){
+        var fs = api.require('fs');
+        //1、创建文件
+        var ret_exist = fs.existSync({
+            path: file
+        });
+
+        if (!ret_exist.exist || ret_exist.directory) {
+            var ret_create = fs.createFileSync({
+                path: file
+            });
+            if (!ret_create.status) {
+                api.hideProgress();
+                api.toast({
+                    msg: '创建文件失败',
+                    duration: 3000,
+                    location: 'middle'
+                });
+                return false;
+            }
+        }else{
+            return true;
+        }
+        //2、打开文件
+        var ret_open = fs.openSync({
+            path: file,
+            flags: 'read_write'
+        });
+        if (!ret_open.status) {
+            api.hideProgress();
+            api.toast({
+                msg: '打开文件失败',
+                duration: 3000,
+                location: 'middle'
+            });
+            return false;
+        }
+        //3、写入文件
+        var ret_write = fs.writeSync({
+            fd:ret_open.fd ,
+            data: content,
+            offset: 0
+        });
+        if (!ret_write.status) {
+            api.hideProgress();
+            api.toast({
+                msg: '写入文件失败',
+                duration: 3000,
+                location: 'middle'
+            });
+            return false;
+        }
+        //4、关闭文件
+        var ret_close = fs.closeSync({
+            fd: ret_open.fd
+        });
+        if (!ret_close.status) {
+            api.hideProgress();
+            api.toast({
+                msg: '关闭文件失败',
+                duration: 3000,
+                location: 'middle'
+            });
+            return false;
+        }
+        return true;
+    }
+
+    //打开阅读器
+    function readBook(filePath,book_id,progress,chapter_index){
+        var type =api.pageParam.type;
+        //去掉书架上的小红点
+        if (1==type) {
+            var jsfun = '$api.css($api.byId("up-hide-'+book_id+'"),"display:none;");';
+            api.execScript({
+                name: 'root',
+                frameName: 'xm_bookshelf_frm',
+                script: jsfun
+            });
+            var bookshelf=$api.getStorage('bookshelf');
+            bookshelf[book_id].hide=true;
+            $api.setStorage('bookshelf',bookshelf);
+        }
+        var book_info=$api.getStorage('read_bookshelf');
+        var chapter_list=book_info[book_id].chapter_list;
+        var bookReader = api.require('bookReader');
+        var signature = api.require('signature');
+        
+        bookReader.open({
+            filePath: filePath,
+            textStyle:{
+                size:16,
+                //color:"#ff0000"
+            },
+           
+            codingType:'utf8',
+            progress:progress
+            //bg:'rgba(0,0,0,0)'
+            //fixedOn:
+        }, function(ret, err) {
+            if (! ret) {
+                return;
+            }
+            var eventType=ret.eventType;
+            if ('page_down'==eventType || 'page_up'==eventType) {
+
+                book_info[book_id].progress=ret.progress;
+                $api.setStorage("read_bookshelf",book_info);
+            }
+            else if ('page_begin'==eventType) {
+                if (0==chapter_index) {
+                    api.toast({
+                        msg: '已至第一页',
+                        duration: 2000,
+                        location: 'middle'
+                    });
+                }else{
+                    chapter_index-=1;
+                    var pre_file_name = signature.md5Sync({
+                        data: chapter_list[chapter_index].link
+                    });
+
+                    var pre_file_path='fs://book/'+book_id+"/"+book_info[book_id].book_source_id+"/"+pre_file_name+".txt";
+
+
+                    bookReader.close(function(close_ret, close_err) {
+                        if (close_ret.status) {
+                            book_info[book_id].chapter_index=chapter_index;
+                            book_info[book_id].progress=100;
+                            book_info[book_id].file_name=pre_file_name;
+                            $api.setStorage("read_bookshelf",book_info);
+                            //异步获取上一章，下三章节
+                            getOtherChapters(book_id,chapter_index);
+                            readBook(pre_file_path,book_id,100,chapter_index);
+                        } 
+                    });
+
+                    /*bookReader.setValue({
+                        filePath:pre_file_path,
+                        progress:100
+                    }, function(ret, err) {
+                        if (ret.status) {
+                            chapter_index-=1;
+                            book_info[book_id].chapter_index=chapter_index;
+                            book_info[book_id].progress=100;
+                            book_info[book_id].file_name=pre_file_name;
+                            $api.setStorage("read_bookshelf",book_info);
+                            //异步获取上一章，下三章节
+                            getOtherChapters(book_id,chapter_index);
+                        }
+                    });*/
+                }
+                
+            }
+
+            else if ( 'page_end'==eventType) {
+                if (chapter_list.length==(chapter_index+1)) {
+                    api.toast({
+                        msg: '没有下一章节',
+                        duration: 2000,
+                        location: 'middle'
+                    });    
+                }else{
+                    chapter_index+=1;
+                    var next_file_name = signature.md5Sync({
+                        data: chapter_list[chapter_index].link
+                    });
+
+                    var next_file_path='fs://book/'+book_id+"/"+book_info[book_id].book_source_id+"/"+next_file_name+".txt";
+
+                    bookReader.close(function(close_ret, close_err) {
+                        if (close_ret.status) {
+                            book_info[book_id].chapter_index=chapter_index;
+                            book_info[book_id].progress=0;
+                            book_info[book_id].file_name=next_file_name;
+                            $api.setStorage("read_bookshelf",book_info);
+                            //异步获取上一章，下三章节
+                            getOtherChapters(book_id,chapter_index);
+                            readBook(next_file_path,book_id,0,chapter_index);
+                        } 
+                    });
+
+                    
+                }
+                
+            }
+            
+
+            /*if ('click'==eventType) {
+                bookReader.hide(function(ret, err) {
+                    if (ret.status) {
+                        alert(JSON.stringify(ret));
+                    } else {
+                        alert(JSON.stringify(err));
+                    }
+                });
+            }*/
+
+        });
+
+        //异步获取上一章，下三章节
+        getOtherChapters(book_id,chapter_index);
+
+
+    }
+    //异步获取上一章，下三章节
+    function getOtherChapters(book_id,chapter_index){
+        var fs = api.require('fs');
+        var signature = api.require('signature');
+        var book_info=$api.getStorage('read_bookshelf')[book_id];
+        var chapter_list=book_info.chapter_list;
+        var book_source_id=book_info.book_source_id;
+        for(var i=0;i<4;i++){
+            if (0==i) {
+                var chapter_list_info=chapter_list[chapter_index-1];
+                if (undefined==chapter_list_info) {
+                    continue;
+                }
+            }else{
+                var chapter_list_info=chapter_list[chapter_index+i];
+                if (undefined==chapter_list_info) {
+                    break;
+                }
+            }
+
+            var encode_url=encodeURIComponent(chapter_list_info.link);
+            var chapter_url="http://chapterup.zhuishushenqi.com/chapter/"+encode_url;
+            //章节id
+            var file_name = signature.md5Sync({
+                data: chapter_list_info.link
+            });
+
+            var file="fs://book/"+book_id+"/"+book_source_id+"/"+file_name+".txt";
+
+
+            //1、创建文件
+            var ret_exist = fs.existSync({
+                path: file
+            });
+            if (ret_exist.exist && !ret_exist.directory) {
+               continue;
+            }
+            ajaxGetOtherChapters(chapter_url,file,chapter_list_info.title,book_info.book_source);
+            
+        }
+    }
+    function ajaxGetOtherChapters(chapter_url,file,chapter_title,book_source){
+        api.ajax({
+            url: chapter_url,
+            method: 'get',
+            cache:true,
+            timeout:3
+        }, function(ret, err) {
+            if (true==ret.ok) {
+                if ('zhuishuvip'==book_source) {
+                    var write_file=writeFile(file,chapter_title+"==========start\n\n"+ret.chapter.cpContent+chapter_title+"==========end\n\n");
+                }else{
+                    var write_file=writeFile(file,chapter_title+"==========start\n\n"+ret.chapter.body+chapter_title+"==========end\n\n");
+                }
+                
+            }
+        });
+    }
+</script>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>设置偏好</title>
+    <link rel="stylesheet" type="text/css" href="../css/aui.css" />
+	<style type="text/css">   
+        body{   
+            margin: 0;   
+            padding: 0;   
+ 			background-color:rgba(0,0,0,0.5);
+        }   
+        div{  
+            width: 280px;   
+            height: 360px;   
+            font-size: 12px;
+            background-color: #fff;   
+        }   
+        .center-in-center{   
+            position: absolute;   
+            top: 50%;   
+            left: 50%;   
+            -webkit-transform: translate(-50%, -50%);   
+            -moz-transform: translate(-50%, -50%);   
+            -ms-transform: translate(-50%, -50%);   
+            -o-transform: translate(-50%, -50%);   
+            transform: translate(-50%, -50%);   
+        }
+        .xm-close{
+			height:50px;
+			line-height: 50px;
+			padding-right: 10px;
+        }
+        .xm-close a{
+			color:#000;
+        }
+        #xm-img{
+        	margin: 0 auto;
+        	width: 140px;
+        	height: 100px;
+        	line-height: 100px;
+        	text-align: center;
+        }
+        #xm-img img{
+
+        	vertical-align: middle;
+        }
+        .aui-btn-row-xm{
+        	height: 65px;
+            line-height: 65px;
+        	text-align: center;
+        }
+        .aui-btn{
+        	margin: 0 5px;
+        	height: 40px;
+            line-height: 40px;
+        	width: 100px;
+        }
+    </style>
+</head>
+<body>
+	<div class="center-in-center">
+		<div class="aui-content">
+			<div class="xm-close">
+			<a class="aui-pull-right " >
+	        	<span class="aui-iconfont aui-icon-close" tapmode onclick="chooseSex('no');"></span>
+	    	</a>
+	    	</div>
+	    	<div id="xm-img"><img src="../image/sex.jpg"></div>
+	    	
+	    	<div style="width: 115px;margin: 0 auto;height: 50px;text-align: center;">
+	    		<span>我们会根据你的喜好推荐相应的小说</span>
+	    	</div>
+			<div style="width: 115px;margin: 10px auto;height: 50px;text-align: center;">
+	    		<span>--请选择你的喜好--</span>
+	    	</div>
+
+	    	<div class="aui-btn-row-xm">
+                <div class="aui-btn aui-btn-info" tapmode onclick="chooseSex('male')">男生小说</div>&nbsp;&nbsp;
+                <div class="aui-btn aui-btn-danger" tapmode onclick="chooseSex('female')">女生小说</div>
+            </div>
+
+		</div>
+	</div>   
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+    function chooseSex(val){
+        api.setPrefs({
+            key: 'sex',
+            value: val
+        });
+
+        var jsfun="updateBookshelf();";
+        api.execScript({
+            frameName: 'xm_bookshelf_frm',
+            script: jsfun
+        });
+
+    	api.closeFrame({
+		    name: 'xm_setpref_frm'
+		});
+    }
+</script>
+</html>
